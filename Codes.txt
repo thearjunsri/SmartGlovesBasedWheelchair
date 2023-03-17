@@ -1,0 +1,263 @@
+GPS_GSM CODE
+
+#include &lt;TinyGPS.h&gt;
+#include &lt;SoftwareSerial.h&gt;
+SoftwareSerial Gsm(7, 8);
+char phone_no[] = &quot;6387850312&quot;; //replace with phone no. to get sms
+
+TinyGPS gps; // Creates a new instance of the TinyGPS object
+void setup()
+
+{
+Serial.begin(9600);
+Gsm.begin(9600);
+
+}
+
+void loop()
+{
+bool newData = false;
+unsigned long chars;
+unsigned short sentences, failed;
+
+// For one second we parse GPS data and report some key values
+for (unsigned long start = millis(); millis() - start &lt; 1000;)
+{
+while (Serial.available())
+{
+
+68
+
+char c = Serial.read();
+Serial.print(c);
+if (gps.encode(c))
+newData = true;
+}
+}
+
+if (newData) //If newData is true
+{
+float flat, flon;
+unsigned long age;
+gps.f_get_position(&amp;flat, &amp;flon, &amp;age);
+Gsm.print(&quot;AT+CMGF=1\r&quot;);
+delay(400);
+Gsm.print(&quot;AT+CMGS=\&quot;&quot;);
+Gsm.print(phone_no);
+Gsm.println(&quot;\&quot;&quot;);
+
+delay(300);
+Gsm.print(&quot;http://maps.google.com/maps?q=loc:&quot;);
+
+// Gsm.print(&quot;Latitude = &quot;);
+Gsm.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
+//Gsm.print(&quot; Longitude = &quot;);
+Serial.print(&quot;,&quot;);
+Gsm.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
+delay(200);
+Gsm.println((char)26); // End AT command with a ^Z, ASCII code 26
+delay(200);
+
+68
+
+Gsm.println();
+
+}
+Serial.println(failed);
+// if (chars == 0)
+// Serial.println(&quot;** No characters received from GPS: check wiring *)
+
+MASTER CONTROL CODE
+
+//master control code
+#define ctsPin1 7
+#define ctsPin2 8
+#define ctsPin3 4
+#define ctsPin4 5
+#include &lt;SoftwareSerial.h&gt;
+SoftwareSerial BTSerial(2,3);
+
+int state = 0;
+
+int ctsValue1=0;
+int ctsValue2=0;
+int ctsValue3=0;
+int ctsValue4=0;
+
+void setup()
+{
+BTSerial.begin(38400);
+Serial.begin(38400);
+pinMode(ctsPin1,INPUT);
+pinMode(ctsPin2,INPUT);
+pinMode(ctsPin3,INPUT);
+
+68
+
+pinMode(ctsPin4,INPUT);
+}
+
+void loop()
+{
+if(BTSerial.available() &gt; 0)
+{
+// Checks whether data is comming from the serial port
+state = BTSerial.read(); // Reads the data from the serial port
+}
+int ctsValue1 = digitalRead(ctsPin1);
+int ctsValue2 = digitalRead(ctsPin2);
+int ctsValue3 = digitalRead(ctsPin3);
+int ctsValue4 = digitalRead(ctsPin4);
+Serial.println(ctsValue1);
+Serial.println(ctsValue2);
+Serial.println(ctsValue3);
+Serial.println(ctsValue4);
+if (ctsValue1 == 1)
+{
+BTSerial.write(&#39;1&#39;);
+}
+else if (ctsValue2 == 1)
+{
+BTSerial.write(&#39;2&#39;);
+}
+else if (ctsValue3 == 1)
+{
+BTSerial.write(&#39;3&#39;);
+}
+else if (ctsValue4 == 1)
+{
+
+68
+
+BTSerial.write(&#39;4&#39;);
+}
+else if(ctsValue1 == 0&amp;&amp;ctsValue2 == 0&amp;&amp;ctsValue3 == 0&amp;&amp;ctsValue4 == 0)
+{
+BTSerial.write(&#39;0&#39;) }}
+
+SLAVE CONTROL PROGRAM
+
+//slave control program
+
+#include &lt;SoftwareSerial.h&gt;
+SoftwareSerial BTSerial(2,3);
+#define trigPin 7
+#define echoPin 12
+// Motor A
+
+const int inputPIN1 = 10;
+const int inputPIN2 = 11;
+// Motor B
+const int inputPIN3 = 8;
+const int inputPIN4 = 9;
+
+int state = 0;
+long duration, distance;
+void setup()
+{
+BTSerial.begin(38400);
+Serial.begin(38400);
+pinMode(inputPIN1, OUTPUT);
+pinMode(inputPIN2, OUTPUT);
+pinMode(inputPIN3, OUTPUT);
+pinMode(inputPIN4, OUTPUT);
+
+68
+
+pinMode(inputPIN5, OUTPUT);
+pinMode(inputPIN6, OUTPUT);
+pinMode(inputPIN7, OUTPUT);
+pinMode(inputPIN8, OUTPUT);
+pinMode(trigPin, OUTPUT);
+pinMode(echoPin, INPUT);
+
+}
+void loop()
+{
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+duration = pulseIn(echoPin, HIGH);
+distance = (duration/2) / 29.1;
+if(BTSerial.available() &gt; 0)
+{
+// Checks whether data is comming from the serial port
+state = BTSerial.read(); // Reads the data from the serial port
+}
+Serial.println(state);
+if ( state==&#39;1&#39;)
+{
+if (distance &lt; 20)
+{
+brake();
+}
+else
+{
+
+68
+
+forward();
+} state=0;
+}
+else if (state == &#39;2&#39;)
+
+{
+right();state=0;
+}
+else if (state ==&#39;3&#39;)
+{
+left();state=0;
+}
+else if (state == &#39;4&#39;)
+{
+back();state=0;
+}
+else if(state==&#39;0&#39;)
+{
+brake();
+}
+}
+
+// TO ROTATE MOTOR forward
+void forward()
+{
+digitalWrite(inputPIN1, HIGH);
+digitalWrite(inputPIN2, LOW);
+digitalWrite(inputPIN3, HIGH);
+digitalWrite(inputPIN4, LOW);
+}
+void right()
+{
+
+68
+
+digitalWrite(inputPIN1, HIGH);
+digitalWrite(inputPIN2, LOW);
+digitalWrite(inputPIN3, HIGH);
+digitalWrite(inputPIN4, LOW);
+}
+void left()
+{
+digitalWrite(inputPIN1, LOW);
+digitalWrite(inputPIN2, HIGH);
+digitalWrite(inputPIN3, LOW);
+digitalWrite(inputPIN4, HIGH);
+}
+void back()
+{
+digitalWrite(inputPIN1, LOW);
+digitalWrite(inputPIN2, HIGH);
+digitalWrite(inputPIN3, LOW);
+digitalWrite(inputPIN4, HIGH);
+}
+
+// MOTOR BRAKE
+void brake()
+{
+digitalWrite(inputPIN1, LOW);
+digitalWrite(inputPIN2, LOW);
+digitalWrite(inputPIN3, LOW);
+digitalWrite(inputPIN4, LOW);
+}
